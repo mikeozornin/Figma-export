@@ -1,0 +1,69 @@
+const fs = require("node:fs");
+const path = require("path");
+const { getFiles, getProjects } = require("./lib");
+const { getFilesToBackup, updateBackupInfo, close: closeDb } = require("./db");
+
+const MAX_FILES = 45;
+const teamIds = process.argv.slice(2);
+
+(async () => {
+  try {
+    const allApiFilesData = [];
+
+    // Step 1: Fetch all files from Figma API for all teams
+    console.log("Fetching file metadata from Figma API...");
+    for (const teamId of teamIds) {
+      const { projects } = await getProjects(teamId);
+
+      for (const project of projects) {
+        const projectId = project.id;
+        const projectFilesData = await getFiles(projectId);
+        
+        // Add project metadata
+        projectFilesData.id = projectId;
+        projectFilesData.team_id = teamId;
+        projectFilesData.project_name = project.name; // Store project name for later use
+
+        allApiFilesData.push(projectFilesData);
+
+        // Step 2: Update database with latest file info (do this for all fetched files)
+        for (const file of projectFilesData.files) {
+          await updateBackupInfo(file.key, file.last_modified, project.name, file.name);
+        }
+      }
+    }
+    console.log(`Fetched metadata for ${allApiFilesData.reduce((sum, p) => sum + p.files.length, 0)} files across ${allApiFilesData.length} projects.`);
+
+    // Step 3: Get ALL files that need backup from DB
+    const filesToBackupFromDb = await getFilesToBackup();
+    console.log(`Found ${filesToBackupFromDb.length} files potentially needing backup in the database.`);
+
+    // Step 4: Filter DB files against actual API files and apply limit
+    const allApiFileKeys = new Set(allApiFilesData.flatMap(project => project.files.map(file => file.key)));
+    
+    const existingFilesToBackup = filesToBackupFromDb.filter(dbFile => allApiFileKeys.has(dbFile.file_key));
+    console.log(`Found ${existingFilesToBackup.length} files that exist in Figma and need backup.`);
+
+    // Apply the limit to the existing files needing backup (already sorted by priority in DB query)
+    const finalFilesToBackup = existingFilesToBackup.slice(0, MAX_FILES);
+    const backupFileKeys = new Set(finalFilesToBackup.map(f => f.file_key));
+    console.log(`Selected ${finalFilesToBackup.length} files for this backup run based on priority and limit.`);
+
+    // Step 5: Filter the API data to include only the final selected files for files.json
+    const filteredFiles = allApiFilesData.map(project => ({
+      ...project,
+      name: project.project_name, // Ensure project name is included
+      files: project.files.filter(file => backupFileKeys.has(file.key))
+    })).filter(project => project.files.length > 0);
+
+    // Step 6: Write to files.json
+    const filesJsonPath = path.join(__dirname, "../files.json");
+    fs.writeFileSync(filesJsonPath, JSON.stringify(filteredFiles, null, 2));
+    console.log(`Successfully wrote ${filteredFiles.length} projects with ${filteredFiles.reduce((acc, proj) => acc + proj.files.length, 0)} files to ${filesJsonPath}`);
+    
+    await closeDb();
+  } catch (error) {
+    console.error("Error:", error);
+    process.exit(1);
+  }
+})();

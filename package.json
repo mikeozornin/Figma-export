@@ -1,0 +1,17 @@
+{
+  "name": "figma-export-clean",
+  "version": "1.0.0",
+  "description": "Smart backup system for Figma files",
+  "main": "scripts/run-backup.js",
+  "scripts": {
+    "backup": "node scripts/run-backup.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.2",
+    "@types/node": "^22.14.1"
+  }
+}

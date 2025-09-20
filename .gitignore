@@ -1,0 +1,11 @@
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+.auth/
+.env
+/files.json
+downloads
+figma_backups.db
+rsync.sh
