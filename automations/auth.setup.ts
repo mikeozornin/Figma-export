@@ -8,6 +8,12 @@ dotenv.config();
 const authFile = ".auth/user.json";
 const accountStateFile = ".auth/account-state.json";
 
+// Check and create authentication directory if it doesn't exist
+const authDir = path.dirname(authFile);
+if (!fs.existsSync(authDir)) {
+    fs.mkdirSync(authDir, { recursive: true });
+  }
+
 // Function to get next account to use
 function getNextAccount() {
   const statePath = path.join(process.cwd(), accountStateFile);
