@@ -6,6 +6,11 @@ const { getFilesToBackup, updateBackupInfo, close: closeDb } = require("./db");
 const MAX_FILES = 45;
 const teamIds = process.argv.slice(2);
 
+// Delay between API requests to respect rate limits (default: 2000ms = max 30 requests/min)
+// Can be configured via FIGMA_API_REQUEST_DELAY_MS env variable (in ms)
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const REQUEST_DELAY_MS = Number(process.env.FIGMA_API_REQUEST_DELAY_MS) || 2000;
+
 (async () => {
   try {
     const allApiFilesData = [];
@@ -15,7 +20,8 @@ const teamIds = process.argv.slice(2);
     for (const teamId of teamIds) {
       const { projects } = await getProjects(teamId);
 
-      for (const project of projects) {
+      for (let i = 0; i < projects.length; i++) {
+        const project = projects[i];
         const projectId = project.id;
         const projectFilesData = await getFiles(projectId);
         
@@ -29,6 +35,11 @@ const teamIds = process.argv.slice(2);
         // Step 2: Update database with latest file info (do this for all fetched files)
         for (const file of projectFilesData.files) {
           await updateBackupInfo(file.key, file.last_modified, project.name, file.name);
+        }
+
+        // Add delay between requests to respect rate limits (except after the last project)
+        if (i < projects.length - 1) {
+          await sleep(REQUEST_DELAY_MS);
         }
       }
     }

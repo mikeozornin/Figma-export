@@ -70,6 +70,8 @@ WAIT_TIMEOUT=10000 # Time in ms to wait between downloads (defaults to 10000)
 # Backup configuration (optional)
 MAX_FILES=45 # Maximum files to backup per run (defaults to 45)
 RETRY_DELAY_HOURS=72 # Hours to wait before retrying failed downloads (defaults to 72)
+
+FIGMA_API_REQUEST_DELAY_MS=2000  # Delay between API requests in ms (default: 2000, ~30 req/min)
 ```
 
 > [!CAUTION]

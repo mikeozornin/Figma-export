@@ -6,13 +6,19 @@ const { getFilesToBackup, updateBackupInfo, close: closeDb } = require("./db");
 const MAX_FILES = 45;
 const projectIds = process.argv.slice(2);
 
+// Delay between API requests to respect rate limits (default: 2000ms = max 30 requests/min)
+// Can be configured via FIGMA_API_REQUEST_DELAY_MS env variable (in ms)
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const REQUEST_DELAY_MS = Number(process.env.FIGMA_API_REQUEST_DELAY_MS) || 2000;
+
 (async () => {
   try {
     const allApiFilesData = [];
 
     // Step 1: Fetch all files from Figma API for specified projects
     console.log("Fetching file metadata from Figma API...");
-    for (const projectId of projectIds) {
+    for (let i = 0; i < projectIds.length; i++) {
+      const projectId = projectIds[i];
       const projectFilesData = await getFiles(projectId);
       
       // Add project metadata
@@ -25,6 +31,11 @@ const projectIds = process.argv.slice(2);
       for (const file of projectFilesData.files) {
         // Assuming projectFilesData.name holds the project name from API
         await updateBackupInfo(file.key, file.last_modified, projectFilesData.name, file.name);
+      }
+
+      // Add delay between requests to respect rate limits (except after the last project)
+      if (i < projectIds.length - 1) {
+        await sleep(REQUEST_DELAY_MS);
       }
     }
     console.log(`Fetched metadata for ${allApiFilesData.reduce((sum, p) => sum + p.files.length, 0)} files across ${allApiFilesData.length} projects.`);

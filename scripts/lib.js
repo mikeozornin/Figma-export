@@ -21,7 +21,7 @@ async function getProjects(teamId) {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.err || data.message);
+      throw new Error(data.err || data.message || `HTTP ${response.status}`);
     }
 
     return data;
@@ -40,7 +40,7 @@ async function getFiles(projectId) {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.err || data.message);
+      throw new Error(data.err || data.message || `HTTP ${response.status}`);
     }
 
     return data;
