@@ -24,13 +24,9 @@ for (const project of projects) {
 
           const downloadPromise = page.waitForEvent("download");
 
-          await page.locator("#toggle-menu-button").click();
-          await page.locator("[id^='mainMenu-file-menu-']").click();
-          const saveAsButton = page.locator("[id^='mainMenu-save-as-']");
-          if (!(await saveAsButton.isVisible())) {
-            throw new Error("Save As menu item not found");
-          }
-          await saveAsButton.click();
+          await page.locator('button[aria-label="Main menu"]').click();
+          await page.getByTestId('main-menu').getByText('File', { exact: true }).click();
+          await page.getByText('Save local copy…').click();
 
           const download = await downloadPromise;
           const suggestedFilename = download.suggestedFilename();
