@@ -29,6 +29,12 @@ function getNextAccount() {
   const nextAccount = (state.lastUsedAccount + 1) % totalAccounts;
   state.lastUsedAccount = nextAccount;
   
+  // Ensure .auth directory exists before writing
+  const authDir = path.dirname(statePath);
+  if (!fs.existsSync(authDir)) {
+    fs.mkdirSync(authDir, { recursive: true });
+  }
+  
   fs.writeFileSync(statePath, JSON.stringify(state));
   return nextAccount + 1; // Return 1-based index for environment variables
 }
