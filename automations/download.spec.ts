@@ -25,7 +25,8 @@ for (const project of projects) {
           const downloadPromise = page.waitForEvent("download");
 
           await page.locator('button[aria-label="Main menu"]').click();
-          await page.getByTestId('main-menu').getByText('File', { exact: true }).click();
+          await page.getByTestId('dropdown-option-File').click();
+          // await page.getByTestId('main-menu').getByText('File', { exact: true }).click();
           await page.getByText('Save local copy…').click();
 
           const download = await downloadPromise;

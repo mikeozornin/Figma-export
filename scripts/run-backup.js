@@ -14,11 +14,12 @@ async function runBackup() {
     // Step 1: Generate files.json
     console.log("Generating files.json...");
     execSync("node scripts/get-team-files.js 1446837479148090378", { stdio: "inherit" });
+    // execSync("node scripts/get-project-files.js 476669832", { stdio: "inherit" });
 
     // Step 2: Run tests
     console.log("Running tests...");
     try {
-      // execSync("npx playwright test automations/download.spec.ts --headed", { stdio: "inherit" });
+      // execSync("npx playwright test automations/download.spec.ts --debug", { stdio: "inherit" });
       execSync("npx playwright test automations/download.spec.ts", { stdio: "inherit" });
       
       console.log("Backup completed successfully!");
